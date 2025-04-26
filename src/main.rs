@@ -103,15 +103,16 @@ fn main() {
         // Escape code for CSV
         let escaped_code = code_clone.replace("\"", "\"\"");
 
-        // Format as CSV: date, time, code, task name, duration (hours), duration (minutes)
+        // Format as CSV: date, time, code, task name, duration (hours), duration (minutes), duration (seconds)
         let log_entry = format!(
-            "{},{},\"{}\",\"{}\",{},{}\n",
+            "{},{},\"{}\",\"{}\",{},{},{}\n",
             chrono::Local::now().format("%Y-%m-%d"),
             chrono::Local::now().format("%H:%M:%S"), // Keep precise time of logging
             escaped_code, // Use the escaped code
             escaped_task_name,
             hours,
-            minutes
+            minutes,
+            seconds // Include seconds in the log entry
         );
 
         let mut file = OpenOptions::new()
@@ -142,7 +143,9 @@ fn main() {
 
         // Print on the same line using carriage return \r
         // Keep the original tracking message and append elapsed time
-        print!("\rTracking task '{}' with code '{}'. Elapsed: {}", task_name, code, time_str);
+        // Print on the same line using carriage return \r and green color
+        // Keep the original tracking message and append elapsed time in green
+        print!("\r\x1b[32mElapsed: {}\x1b[0m", time_str); // \x1b[32m is ANSI green, \x1b[0m resets color
         stdout().flush().expect("Failed to flush stdout");
 
         // Sleep for 1 second
@@ -170,7 +173,8 @@ fn create_csv_with_headers_if_needed(path: &PathBuf) {
     if !file_exists || file_empty {
         match File::create(path) {
             Ok(mut file) => {
-                let headers = "Date,Time,Code,Task,Hours,Minutes\n";
+                // Update headers to include Seconds
+                let headers = "Date,Time,Code,Task,Hours,Minutes,Seconds\n";
                 // Note: std::io::Write was imported as IoWrite, but file.write_all uses the trait implicitly.
                 file.write_all(headers.as_bytes()).expect("Failed to write headers");
             },
